@@ -1,0 +1,73 @@
+incremental-compilers:
+  type: Article 
+  title: An Incremental Approach to Compiler Construction
+  author: Ghuloum, Abdulaziz
+  date: 2006
+  url: http://scheme2006.cs.uchicago.edu/11-ghuloum.pdf
+
+peephole:
+  type: Article
+  title: Peephole Optimization
+  author: McKeeman, W. M.
+  date: 1965-07-01
+  serial-number:
+    doi: "10.1145/364995.365000"
+  url: https://dl.acm.org/doi/epdf/10.1145/364995.365000
+
+compiler-bugs:
+  type: Article
+  title: Toward Understanding Compiler Bugs in GCC and LLVM
+  author:
+    - Sun, Chengnian
+    - Le, Vu
+    - Zhang, Qirun
+    - Su, Zhendong
+  date: 2016-07-18
+  serial-number:
+    doi: "10.1145/2931037.2931074"
+  url: https://dl.acm.org/doi/epdf/10.1145/2931037.2931074
+
+compilers-and-how-they-work:
+  type: video
+  title: Compilers, How They Work, And Writing Them From Scratch
+  author: McDaniel, Adam 
+  date: 2024-06-01
+  url: https://youtu.be/QdnxjYj1pS0
+
+what-compilers-can-and-cannot-do:
+  type: video
+  title: What Compilers Can and Cannot Do 
+  author: Schardl, Tao B.
+  date: 2019-9-23
+  url: https://youtu.be/ulJm7_aTiQM
+
+rust-1-0:
+  type: blog
+  title: Announcing Rust 1.0
+  author: The Rust Core Team
+  date: 2015-5-15
+  url: https://blog.rust-lang.org/2015/05/15/Rust-1.0/
+
+rust-latest-release:
+  type: blog
+  title: Announcing Rust 1.97.1
+  author: The Rust Release Team
+  date: 2026-7-16
+  url: https://blog.rust-lang.org/2026/07/16/Rust-1.97.1/
+
+rustc-dev-guide:
+  type: misc
+  title: Overview of the compiler
+  url: https://rustc-dev-guide.rust-lang.org/overview.html
+
+speed-optimizations:
+  type: web
+  title: C Speed Optimization Checklist
+  url: https://gist.github.com/Raimo33/a242dda9db872e0f4077f17594da9c78
+
+frustrated-dot-net-c-sharp:
+  type: blog
+  title: What Frustrates Me the Most as a C#/.NET Developer
+  author: Aguirre, Cesar
+  date: 2025-2-28
+  url: https://canro91.github.io/2025/02/28/Frustrations/

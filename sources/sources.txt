@@ -1,8 +1,0 @@
-The World's First COBOL Compilers
-https://web.archive.org/web/20111013021915/http://www.computerhistory.org/events/lectures/cobol_06121997/index.shtml
-
-McKeeman, W.M. "Peephole optimization". Communications of the ACM
-https://dl.acm.org/doi/epdf/10.1145/364995.365000
-
-Chengnian Sun, Vu Le, Qirun Zhang, and Zhendong Su. 2016. Toward understanding compiler bugs in GCC and LLVM. In Proceedings of the 25th International Symposium on Software Testing and Analysis (ISSTA 2016). Association for Computing Machinery, New York, NY, USA, 294–305. https://doi.org/10.1145/2931037.2931074
-https://dl.acm.org/doi/epdf/10.1145/2931037.2931074

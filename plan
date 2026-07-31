@@ -1,0 +1,18 @@
+1. build the compiler
+    - while building, take notes on what's dififcult and wahts easy, what features of rust 
+      make the complier easy to build, what's difficult about it, etc.
+      
+2. write the paper
+    - discuss intermediary steps when building compiler: compiling to IR then machine code, 
+      some optimizations? and checking if the code is actually correct
+    
+
+-----------------------------------------------------------------------------------------------
+Plan from logbook:
+    Will build the compiler first, noting how easy/difficult it is using the features of rust.
+    Also need to find some other compilers for C or different languages, noting the relative 
+    complexity and the optimizations made which are interesting. 
+
+    How easy would each feature missing from my compiler be to implement using the features of 
+    Rust? What about Rust makes these features easier/more difficult to implement?
+        
