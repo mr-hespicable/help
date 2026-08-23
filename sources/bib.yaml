@@ -71,3 +71,22 @@ frustrated-dot-net-c-sharp:
   author: Aguirre, Cesar
   date: 2025-2-28
   url: https://canro91.github.io/2025/02/28/Frustrations/
+
+abstract-syntax-tree-implementation-idioms:
+  type: article
+  title: Abstract Syntax Tree Implementation Idioms
+  author: Jones, Joel
+  date: 2003
+  url: https://www.hillside.net/plop/plop2003/Papers/Jones-ImplementingASTs.pdf
+
+compiler-explorer:
+  type: web
+  title: Compiler Explorer
+  author: Godbolt, Matt
+  url: https://godbolt.org/
+
+condition-cheat-sheet:
+  type: web
+  title: aarch64 condition code cheat sheet 
+  author: ryo
+  url: https://gist.github.com/ryo/31017f265cc2f9ade124aea64543df22

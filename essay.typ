@@ -78,5 +78,22 @@ capabilities of the language, which piqued my interest of the other capabilities
 language, outside what I had learnt while building the operating system. Additionally, I had
 been increasingly interested in compilers and machine code (through a brief attempt
 at building a bootloader in assembly for the operating system)
+
+---
+
+Important quote from @abstract-syntax-tree-implementation-idioms: 
+"When implementing ASTs using an object-oriented language, polymorphism, rather
+than switch statements, should be used to dispatch on the type of the elements of the
+tree."
+
+The solution I'm using:
+7.2 on @abstract-syntax-tree-implementation-idioms
+
+---
+
+An interesting problem i encountered: there is like ZERO documentation on the A64
+instruction set with examples, so I found this website called Compiler Explorer 
+@compiler-explorer which allows me to learn more about the assembly language.
+
 #pagebreak()
 #bibliography("sources/bib.yaml", style: "ieee")
