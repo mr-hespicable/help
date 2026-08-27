@@ -27,6 +27,7 @@ impl Parser {
         }
     }
 
+
     pub fn parse(&mut self) -> Result<ASTNode, ParserError> {
         let mut ast_node: ASTNode = ASTNode::new(ASTNodeKind::Program, None);
 

@@ -96,14 +96,22 @@ impl Generator {
             return Err(self.fail("arithmetic operator ASTNode does not have two children"));
         }
 
+        let mut lhs_string = String::new();
+        let mut rhs_string = String::new();
+
         for t in children.iter().enumerate() {
             let c = t.1;
 
             let subtree = *c.clone();
 
             if subtree.get_kind() != &ASTNodeKind::PrimaryExp {
-                arithmetic_string.push_str(&self.generate_arithmetic(&subtree, t.0)?);
-                arithmetic_string.push('\n');
+                    if t.0 == 0 {
+                        lhs_string.push_str(&self.generate_arithmetic(&subtree, t.0)?);
+                        lhs_string.push('\n');
+                    } else {
+                        rhs_string.push_str(&self.generate_arithmetic(&subtree, t.0)?);
+                        rhs_string.push('\n');
+                    }
             } else {
                 let subsubtree = subtree.get_subtrees();
 
@@ -111,9 +119,20 @@ impl Generator {
                     return Err(self.fail("PrimaryExp ASTNode should only have one child."));
                 }
 
-                arithmetic_string
-                    .push_str(&self.generate_primary_with_register(&subtree, &format!("w{}", t.0))?);
+                if t.0 == 0 {
+                    lhs_string.push_str(&self.generate_primary_with_register(&subtree, &format!("w{}", t.0))?);
+                } else {
+                    rhs_string.push_str(&self.generate_primary_with_register(&subtree, &format!("w{}", t.0))?);
+                }
             }
+        }
+
+        if children[0].get_kind() == &ASTNodeKind::PrimaryExp && children[1].get_kind() != &ASTNodeKind::PrimaryExp {
+            arithmetic_string.push_str(&rhs_string);
+            arithmetic_string.push_str(&lhs_string);
+        } else {
+            arithmetic_string.push_str(&lhs_string);
+            arithmetic_string.push_str(&rhs_string);
         }
 
         match op {
@@ -172,6 +191,7 @@ impl Generator {
         let mut unary_str = String::new();
 
         let children = ast.get_subtrees();
+        let child = &*children[0].clone();
 
         // we can do this since ASTNodeKind::UnOp should only  have one child
         // let's check, just in case!
@@ -179,8 +199,16 @@ impl Generator {
             return Err(self.fail("length of unary children array > 1"));
         }
 
-        let inner_exp_asm = self.generate_primary_with_register(&*children[0].clone(), register)?;
-        unary_str.push_str(&inner_exp_asm);
+        match child.get_kind() {
+            ASTNodeKind::PrimaryExp => {
+                let inner_exp_asm = self.generate_primary_with_register(&*children[0].clone(), register)?;
+                unary_str.push_str(&inner_exp_asm);
+            },
+            _ => {
+                let exp_asm = self.generate_arithmetic(&child, 0)?;
+                unary_str.push_str(&exp_asm);
+            }
+        }
 
         match op {
             '-' => {

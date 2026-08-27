@@ -2,8 +2,6 @@ use crate::codegen::Generator;
 use crate::lexer::Tokenizer;
 use crate::parser::Parser;
 use std::fs::File;
-use std::io::Error;
-use std::io::Write;
 use std::process::Command;
 
 pub mod ast;
@@ -16,7 +14,7 @@ pub fn to_file(filename: &str) -> Result<(), Box<dyn std::error::Error>> {
     let file_name_no_ext: String = filename.rsplitn(2, ".").collect::<Vec<_>>()[1].to_string();
     let asm_file_name = format!("{}.s", file_name_no_ext);
     // dbg![&file_name_no_ext];
-    let mut asm_file = File::create(&asm_file_name)?;
+    let mut _asm_file = File::create(&asm_file_name)?;
 
     // dbg![&filename];
 

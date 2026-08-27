@@ -33,7 +33,6 @@ impl std::fmt::Debug for ASTNode {
 
             for c in child.get_subtrees() {
                 pstring.push_str(&pprint_inner(spaces + 4, *c.clone()));
-                pstring.push('\n')
             }
 
             pstring
