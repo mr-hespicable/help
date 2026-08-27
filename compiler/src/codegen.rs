@@ -90,11 +90,11 @@ impl Generator {
             );
         };
 
-        let children = ast.get_subtrees();
-
-        if children.len() != 2 {
+        if ast.get_subtrees().len() != 2 {
             return Err(self.fail("arithmetic operator ASTNode does not have two children"));
         }
+
+        let children = ast.get_subtrees();
 
         let mut lhs_string = String::new();
         let mut rhs_string = String::new();
@@ -105,13 +105,13 @@ impl Generator {
             let subtree = *c.clone();
 
             if subtree.get_kind() != &ASTNodeKind::PrimaryExp {
-                    if t.0 == 0 {
-                        lhs_string.push_str(&self.generate_arithmetic(&subtree, t.0)?);
-                        lhs_string.push('\n');
-                    } else {
-                        rhs_string.push_str(&self.generate_arithmetic(&subtree, t.0)?);
-                        rhs_string.push('\n');
-                    }
+                if t.0 == 0 {
+                    lhs_string.push_str(&self.generate_arithmetic(&subtree, t.0)?);
+                    lhs_string.push('\n');
+                } else {
+                    rhs_string.push_str(&self.generate_arithmetic(&subtree, t.0)?);
+                    rhs_string.push('\n');
+                }
             } else {
                 let subsubtree = subtree.get_subtrees();
 
@@ -120,14 +120,20 @@ impl Generator {
                 }
 
                 if t.0 == 0 {
-                    lhs_string.push_str(&self.generate_primary_with_register(&subtree, &format!("w{}", t.0))?);
+                    lhs_string.push_str(
+                        &self.generate_primary_with_register(&subtree, &format!("w{}", t.0))?,
+                    );
                 } else {
-                    rhs_string.push_str(&self.generate_primary_with_register(&subtree, &format!("w{}", t.0))?);
+                    rhs_string.push_str(
+                        &self.generate_primary_with_register(&subtree, &format!("w{}", t.0))?,
+                    );
                 }
             }
         }
 
-        if children[0].get_kind() == &ASTNodeKind::PrimaryExp && children[1].get_kind() != &ASTNodeKind::PrimaryExp {
+        if children[0].get_kind() == &ASTNodeKind::PrimaryExp
+            && children[1].get_kind() != &ASTNodeKind::PrimaryExp
+        {
             arithmetic_string.push_str(&rhs_string);
             arithmetic_string.push_str(&lhs_string);
         } else {
@@ -201,9 +207,10 @@ impl Generator {
 
         match child.get_kind() {
             ASTNodeKind::PrimaryExp => {
-                let inner_exp_asm = self.generate_primary_with_register(&*children[0].clone(), register)?;
+                let inner_exp_asm =
+                    self.generate_primary_with_register(&*children[0].clone(), register)?;
                 unary_str.push_str(&inner_exp_asm);
-            },
+            }
             _ => {
                 let exp_asm = self.generate_arithmetic(&child, 0)?;
                 unary_str.push_str(&exp_asm);
