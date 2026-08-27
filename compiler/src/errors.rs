@@ -1,18 +1,6 @@
 use std::{error::Error, fmt};
 
 #[derive(Debug)]
-pub struct LexerError(pub String);
-
-impl fmt::Display for LexerError {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        let LexerError(s) = self;
-        write!(f, "{}", s)
-    }
-}
-
-impl Error for LexerError {}
-
-#[derive(Debug)]
 pub struct ParserError(pub String);
 
 impl fmt::Display for ParserError {
@@ -35,3 +23,15 @@ impl fmt::Display for GeneratorError {
 }
 
 impl Error for GeneratorError {}
+
+#[derive(Debug)]
+pub struct TokenizerError(pub String);
+
+impl fmt::Display for TokenizerError {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        let Self(s) = self;
+        write!(f, "{}", s)
+    }
+}
+
+impl Error for TokenizerError {}

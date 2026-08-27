@@ -9,6 +9,7 @@ pub mod codegen;
 pub mod errors;
 pub mod lexer;
 pub mod parser;
+pub mod tokens;
 
 pub fn to_file(filename: &str) -> Result<(), Box<dyn std::error::Error>> {
     let file_name_no_ext: String = filename.rsplitn(2, ".").collect::<Vec<_>>()[1].to_string();

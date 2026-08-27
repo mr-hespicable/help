@@ -2,27 +2,8 @@ use regex::Regex;
 use std::fs::File;
 use std::io::Read;
 
-use crate::errors::LexerError;
-
-#[derive(Debug, Clone, PartialEq)]
-pub enum Token {
-    Keyword(String),
-    DataType(String),
-    LeftBrace,
-    RightBrace,
-    LeftParen,
-    RightParen,
-    Semicolon,
-    Identifier(String),
-    DecimalIntegarLiteral(usize),
-    Other,
-    BitwiseComplement, // 4 = 100. !4 = 011 = 3
-    LogicalNegation,   // !1 = 0; !24 = 0, !0 = 1
-    Add,               // 6 + 7
-    Minus,             // minus sign
-    Multiply,          // 6 * 9
-    Divide,            // 20 / 4
-}
+use crate::errors::TokenizerError;
+use crate::tokens::{self, Token, REGEX_TABLE};
 
 pub struct Tokenizer {
     in_file: File,
@@ -41,114 +22,21 @@ impl Tokenizer {
         Ok(contents)
     }
 
-    pub fn tokenize(&self) -> Result<Vec<Token>, LexerError> {
+    pub fn tokenize(&self) -> Result<Vec<Token>, TokenizerError> {
         let contents = self.load_file().unwrap_or(String::new());
         // dbg![&contents];
         let mut results = vec![];
 
-        let tokens = [
-            ("dt", r"int"),
-            ("kw", r"return"),
-            ("lb", r"\{"),
-            ("rb", r"\}"),
-            ("lp", r"\("),
-            ("rp", r"\)"),
-            ("sc", r";"),
-            ("id", r"[a-zA-Z]\w*"),
-            ("dc", r"[0-9]+"),
-            ("ng", r"-"),
-            ("bc", r"~"),
-            ("lng", r"!"),
-            ("ad", r"\+"),
-            ("mlt", r"\*"),
-            ("dv", r"/"),
-        ];
-
-        let token_matching_str = tokens
-            .into_iter()
-            .map(|x| format!("({})", x.1))
-            .collect::<Vec<String>>()
-            .join("|");
+        let token_matching_str = REGEX_TABLE.join("|");
 
         let rgx = Regex::new(&token_matching_str).unwrap();
 
         let unsorted_matches: Vec<&str> = rgx.find_iter(&contents).map(|m| m.as_str()).collect();
 
         for m in unsorted_matches {
-            for (mc, re) in &tokens {
-                if Regex::new(re).unwrap().is_match(m) {
-                    let token: Token;
-                    match *mc {
-                        "kw" => {
-                            token = Token::Keyword(m.to_string());
-                        }
-                        "dt" => {
-                            token = Token::DataType(m.to_string());
-                        }
-                        "lb" => {
-                            token = Token::LeftBrace;
-                        }
-                        "rb" => {
-                            token = Token::RightBrace;
-                        }
-                        "lp" => {
-                            token = Token::LeftParen;
-                        }
-                        "rp" => {
-                            token = Token::RightParen;
-                        }
-                        "sc" => {
-                            token = Token::Semicolon;
-                        }
-                        "id" => {
-                            token = Token::Identifier(m.to_string());
-                        }
-                        "dc" => {
-                            token = Token::DecimalIntegarLiteral(m.parse().unwrap());
-                        }
-                        "ng" => {
-                            token = Token::Minus;
-                        }
-                        "bc" => {
-                            token = Token::BitwiseComplement;
-                        }
-                        "lng" => {
-                            token = Token::LogicalNegation;
-                        }
-                        "ad" => {
-                            token = Token::Add;
-                        }
-                        "mlt" => {
-                            token = Token::Multiply;
-                        }
-                        "dv" => {
-                            token = Token::Divide;
-                        }
-                        _ => return Err(self.fail()),
-                    };
-                    results.push(token);
-                    break;
-                }
-            }
-        }
-
-        if results.len() == 0 {
-            return Err(self.fail());
+            results.push(tokens::get_token_from_string(m)?);
         }
 
         Ok(results)
-    }
-
-    #[track_caller]
-    fn fail(&self) -> LexerError {
-        let caller_location = std::panic::Location::caller();
-        let err_string = "failed at".to_string();
-        LexerError(format!(
-            "{}; in {} @ {}:{}",
-            err_string,
-            caller_location.file(),
-            caller_location.line(),
-            caller_location.column()
-        ))
     }
 }

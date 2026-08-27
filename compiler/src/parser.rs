@@ -1,6 +1,6 @@
 use crate::ast::{ASTNode, ASTNodeKind};
 use crate::errors::ParserError;
-use crate::lexer::Token;
+use crate::tokens::Token;
 
 use std::collections::VecDeque;
 
@@ -94,7 +94,7 @@ impl Parser {
         // additive ( + or - ) additive | multiplicative
         let mut ast_node: Option<ASTNode> = None;
 
-        let predicate = |x: &mut Token| *x == Token::Add || *x == Token::Minus;
+        let predicate = |x: &mut Token| *x == Token::Plus || *x == Token::Minus;
 
         let mut children: [Option<ASTNode>; 2] = [None, None];
 
@@ -119,7 +119,7 @@ impl Parser {
             let rhs = self.parse_multiplicative()?;
 
             match operator {
-                Some(Token::Add) => ast_node = Some(ASTNode::new(ASTNodeKind::AddSubOp('+'), None)),
+                Some(Token::Plus) => ast_node = Some(ASTNode::new(ASTNodeKind::AddSubOp('+'), None)),
                 Some(Token::Minus) => ast_node = Some(ASTNode::new(ASTNodeKind::AddSubOp('-'), None)),
                 _ => return Err(self.fail("SOMEHOW. Somehow the operator is none. this is literally impossible. if this triggers idk what to do.")),
             }
@@ -147,7 +147,7 @@ impl Parser {
         // mult ( * or / ) mult | primary
         let mut ast_node: Option<ASTNode> = None;
 
-        let predicate = |x: &mut Token| *x == Token::Multiply || *x == Token::Divide;
+        let predicate = |x: &mut Token| *x == Token::Times || *x == Token::Divide;
 
         let mut children: [Option<ASTNode>; 2] = [None, None];
 
@@ -176,7 +176,7 @@ impl Parser {
             children[1] = Some(rhs);
 
             match operator {
-                Some(Token::Multiply) => ast_node = Some(ASTNode::new(ASTNodeKind::MultDivOp('*'), None)),
+                Some(Token::Times) => ast_node = Some(ASTNode::new(ASTNodeKind::MultDivOp('*'), None)),
                 Some(Token::Divide) => ast_node = Some(ASTNode::new(ASTNodeKind::MultDivOp('/'), None)),
                 _ => return Err(self.fail("SOMEHOW. Somehow the operator is none. this is literally impossible. if this matches idk what to do.")),
             }
