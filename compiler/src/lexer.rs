@@ -4,7 +4,7 @@ use std::io::Read;
 
 use crate::errors::LexerError;
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, Clone, PartialEq)]
 pub enum Token {
     Keyword(String),
     DataType(String),
@@ -16,9 +16,12 @@ pub enum Token {
     Identifier(String),
     DecimalIntegarLiteral(usize),
     Other,
-    Negation,          // minus sign
     BitwiseComplement, // 4 = 100. !4 = 011 = 3
     LogicalNegation,   // !1 = 0; !24 = 0, !0 = 1
+    Add,               // 6 + 7
+    Minus,             // minus sign
+    Multiply,          // 6 * 9
+    Divide,            // 20 / 4
 }
 
 pub struct Tokenizer {
@@ -32,7 +35,7 @@ impl Tokenizer {
 
     fn load_file(&self) -> std::io::Result<String> {
         let mut file = &self.in_file;
-        dbg![&file];
+        // dbg![&file];
         let mut contents = String::new();
         file.read_to_string(&mut contents)?;
         Ok(contents)
@@ -40,7 +43,7 @@ impl Tokenizer {
 
     pub fn tokenize(&self) -> Result<Vec<Token>, LexerError> {
         let contents = self.load_file().unwrap_or(String::new());
-        dbg![&contents];
+        // dbg![&contents];
         let mut results = vec![];
 
         let tokens = [
@@ -56,6 +59,9 @@ impl Tokenizer {
             ("ng", r"-"),
             ("bc", r"~"),
             ("lng", r"!"),
+            ("ad", r"\+"),
+            ("mlt", r"\*"),
+            ("dv", r"/"),
         ];
 
         let token_matching_str = tokens
@@ -101,13 +107,22 @@ impl Tokenizer {
                             token = Token::DecimalIntegarLiteral(m.parse().unwrap());
                         }
                         "ng" => {
-                            token = Token::Negation;
+                            token = Token::Minus;
                         }
                         "bc" => {
                             token = Token::BitwiseComplement;
                         }
                         "lng" => {
                             token = Token::LogicalNegation;
+                        }
+                        "ad" => {
+                            token = Token::Add;
+                        }
+                        "mlt" => {
+                            token = Token::Multiply;
+                        }
+                        "dv" => {
+                            token = Token::Divide;
                         }
                         _ => return Err(self.fail()),
                     };
