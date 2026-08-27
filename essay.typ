@@ -97,3 +97,10 @@ instruction set with examples, so I found this website called Compiler Explorer
 
 #pagebreak()
 #bibliography("sources/bib.yaml", style: "ieee")
+
+---
+```EBNF
+additive-expression ::= multiplicative-expression ( ( '+' | '-' ) multiplicative-expression )
+multiplicative-expression ::= primary-expression ( ( '*' | '/' ) primary-expression )
+primary-expression ::= '(' additive-expression ')' | NUMBER | VARIABLE | '-' primary-expression
+```
