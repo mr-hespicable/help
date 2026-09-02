@@ -1,5 +1,5 @@
-use regex::Regex;
 use crate::errors::TokenizerError;
+use regex::Regex;
 
 #[derive(Debug, Clone, PartialEq)]
 pub enum Token {
@@ -11,53 +11,95 @@ pub enum Token {
     RightParen,
     Semicolon,
     Identifier(String),
-    DecimalIntegarLiteral(usize),
+    DecimalIntegerLiteral(usize),
+    Plus,   // 6 + 7
+    Minus,  // minus sign
+    Times,  // 6 * 9
+    Divide, // 20 / 4
+    LeftShift,
+    RightShift,
+    Lt,
+    Gt,
+    Le,
+    Ge,
+    Eq,
+    Ne,
+    LogicalAnd,
+    LogicalOr,
+    BitwiseAnd,
+    BitwiseExclusiveOr,
+    BitwiseOr,
     BitwiseComplement, // 4 = 100. ~4 = 011 = 3
     LogicalNegation,   // !1 = 0; !24 = 0, !0 = 1
-    Plus,               // 6 + 7
-    Minus,             // minus sign
-    Times,          // 6 * 9
-    Divide,            // 20 / 4
+    SimpleAssign,
 }
 
-pub const REGEX_TABLE: [&str; 15] = [
-    r"int", // datatype
-    r"return", // keyword
-    r"\{", // left brace
-    r"\}", // right brace
-    r"\(", // left paren
-    r"\)", // right paren
-    r";", // semicolon
-    r"[a-zA-Z]\w*", // identifier
-    r"[0-9]+", // decimalintegerliteral
-    r"~", // bitwise complement
-    r"!", // logical negation
-    r"\+", // add
-    r"-", // minus
-    r"\*", // multiply
-    r"/", // divide
+pub const REGEX_TABLE: [&str; 29] = [
+    r"int",
+    r"return",
+    r"\{",
+    r"\}",
+    r"\(",
+    r"\)",
+    r";",
+    r"[a-zA-Z]\w*",
+    r"[0-9]+",
+    r"\+",
+    r"-",
+    r"\*",
+    r"/",
+    r"<<",
+    r">>",
+    r"<=",
+    r">=",
+    r"<",
+    r">",
+    r"==",
+    r"!=",
+    r"&&",
+    r"\|\|",
+    r"&",
+    r"\^",
+    r"\|",
+    r"~",
+    r"!",
+    r"=",
 ];
 
 pub fn get_token_from_string(s: &str) -> Result<Token, TokenizerError> {
-    for (i, re) in REGEX_TABLE.iter().enumerate() {
+    for re in REGEX_TABLE {
         if Regex::new(re).unwrap().is_match(s) {
-            return match i {
-                0 => Ok(Token::DataType(s.to_string())),
-                1 => Ok(Token::Keyword(s.to_string())),
-                2 => Ok(Token::LeftBrace),
-                3 => Ok(Token::RightBrace),
-                4 => Ok(Token::LeftParen),
-                5 => Ok(Token::RightParen),
-                6 => Ok(Token::Semicolon),
-                7 => Ok(Token::Identifier(s.to_string())),
-                8 => Ok(Token::DecimalIntegarLiteral(s.parse().unwrap())),
-                9 => Ok(Token::BitwiseComplement),
-                10 => Ok(Token::LogicalNegation),
-                11 => Ok(Token::Plus),
-                12 => Ok(Token::Minus),
-                13 => Ok(Token::Times),
-                14 => Ok(Token::Divide),
-                _ => Err(fail("regex does not match any in REGEX_TABLE")) 
+            return match re {
+                r"int" => Ok(Token::DataType(s.to_string())),
+                r"return" => Ok(Token::Keyword(s.to_string())),
+                r"\{" => Ok(Token::LeftBrace),
+                r"\}" => Ok(Token::RightBrace),
+                r"\(" => Ok(Token::LeftParen),
+                r"\)" => Ok(Token::RightParen),
+                r";" => Ok(Token::Semicolon),
+                r"[a-zA-Z]\w*" => Ok(Token::Identifier(s.to_string())),
+                r"[0-9]+" => Ok(Token::DecimalIntegerLiteral(s.parse().unwrap())),
+                r"\+" => Ok(Token::Plus),
+                r"-" => Ok(Token::Minus),
+                r"\*" => Ok(Token::Times),
+                r"/" => Ok(Token::Divide),
+                r"<<" => Ok(Token::LeftShift),
+                r">>" => Ok(Token::RightShift),
+                r"<=" => Ok(Token::Le),
+                r">=" => Ok(Token::Ge),
+                r"<" => Ok(Token::Lt),
+                r">" => Ok(Token::Gt),
+                r"==" => Ok(Token::Eq),
+                r"!=" => Ok(Token::Ne),
+                r"&&" => Ok(Token::LogicalAnd),
+                r"\|\|" => Ok(Token::LogicalOr),
+                r"&" => Ok(Token::BitwiseAnd),
+                r"\^" => Ok(Token::BitwiseExclusiveOr),
+                r"\|" => Ok(Token::BitwiseOr),
+                r"~" => Ok(Token::BitwiseComplement),
+                r"!" => Ok(Token::LogicalNegation),
+                r"=" => Ok(Token::SimpleAssign),
+                _ => Err(fail("regex does not match any in REGEX_TABLE")),
             };
         }
     }

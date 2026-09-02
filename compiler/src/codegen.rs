@@ -1,7 +1,8 @@
 use crate::{
-    ast::{ASTNode, ASTNodeKind},
-    errors::GeneratorError,
+    ast::{ASTNode, ASTNodeKind, CmpType, EqType, ShiftType}, errors::GeneratorError,
 };
+
+use nanoid::nanoid;
 
 pub struct Generator {
     ast: ASTNode,
@@ -17,11 +18,6 @@ impl Generator {
     }
 
     pub fn generate(&mut self) -> Result<String, GeneratorError> {
-        // ".globl _" + function_name
-        // "_" + function_name
-        // "mov w0, #" + ret val
-        // "ret"
-
         if !matches!(self.ast.get_kind(), ASTNodeKind::Program) {
             return Err(self.fail("starting node is not Program node"));
         }
@@ -45,8 +41,8 @@ impl Generator {
         func_str.push_str(&format!(".globl _{}\n_{}:\n", id, id));
 
         for child in ast.get_subtrees() {
-            if matches!(child.get_kind(), ASTNodeKind::Statement(_)) {
-                let statement_asm = &self.generate_statement(*child)?;
+            if matches!(child.get_kind(), ASTNodeKind::Statement) {
+                let statement_asm = &self.generate_statement(&*child)?;
                 func_str.push_str(statement_asm);
             }
         }
@@ -54,41 +50,48 @@ impl Generator {
         Ok(func_str)
     }
 
-    fn generate_statement(&mut self, ast: ASTNode) -> Result<String, GeneratorError> {
+    fn generate_statement(&mut self, ast: &ASTNode) -> Result<String, GeneratorError> {
         let mut statement_str = String::new();
 
-        let ASTNodeKind::Statement(r) = ast.get_kind() else {
+        let ASTNodeKind::Return = ast.get_kind() else {
             return Err(self.fail("ASTNode passed to statement node was not of statement type"));
         };
 
-        if r == "return" {
-            for child in ast.get_subtrees() {
-                match child.get_kind() {
-                    ASTNodeKind::PrimaryExp => {
-                        let expression_asm = self.generate_primary(&*child)?;
-                        statement_str.push_str(&expression_asm);
-                    }
-                    ASTNodeKind::AddSubOp(_) | ASTNodeKind::MultDivOp(_) => {
-                        let expression_asm = self.generate_arithmetic(&*child, 0)?;
-                        statement_str.push_str(&expression_asm);
-                    }
-                    _ => unimplemented!(),
+        for child in ast.get_subtrees() {
+            match child.get_kind() {
+                ASTNodeKind::PrimaryExp => {
+                    let expression_asm = self.generate_primary_with_register(&*child, "w0")?;
+                    statement_str.push_str(&expression_asm);
                 }
+
+                ASTNodeKind::UnOp(_)
+                | ASTNodeKind::MultDivOp(_)
+                | ASTNodeKind::AddSubOp(_)
+                | ASTNodeKind::ShiftOp(_)
+                | ASTNodeKind::CmpOp(_)
+                | ASTNodeKind::EqOp(_)
+                | ASTNodeKind::BAndOp
+                | ASTNodeKind::BXOrOp
+                | ASTNodeKind::BOrOp
+                | ASTNodeKind::LAndOp
+                | ASTNodeKind::LOrOp => {
+                    let expression_asm = self.generate_binary_op(&*child, "w0")?;
+                    statement_str.push_str(&expression_asm);
+                }
+                _ => unimplemented!(),
             }
-            statement_str.push_str("ret");
         }
+        statement_str.push_str("ret");
 
         Ok(statement_str)
     }
 
-    fn generate_arithmetic(&mut self, ast: &ASTNode, rhs: usize) -> Result<String, GeneratorError> {
+    fn generate_binary_op(
+        &mut self,
+        ast: &ASTNode,
+        register: &str,
+    ) -> Result<String, GeneratorError> {
         let mut arithmetic_string = String::new();
-
-        let (&ASTNodeKind::AddSubOp(op) | &ASTNodeKind::MultDivOp(op)) = ast.get_kind() else {
-            return Err(
-                self.fail("ASTNode passed to generate_arithmetic was not an arithmetic operator")
-            );
-        };
 
         if ast.get_subtrees().len() != 2 {
             return Err(self.fail("arithmetic operator ASTNode does not have two children"));
@@ -106,10 +109,10 @@ impl Generator {
 
             if subtree.get_kind() != &ASTNodeKind::PrimaryExp {
                 if t.0 == 0 {
-                    lhs_string.push_str(&self.generate_arithmetic(&subtree, t.0)?);
+                    lhs_string.push_str(&self.generate_binary_op(&subtree, &format!("w{}", t.0))?);
                     lhs_string.push('\n');
                 } else {
-                    rhs_string.push_str(&self.generate_arithmetic(&subtree, t.0)?);
+                    rhs_string.push_str(&self.generate_binary_op(&subtree, &format!("w{}", t.0))?);
                     rhs_string.push('\n');
                 }
             } else {
@@ -131,6 +134,7 @@ impl Generator {
             }
         }
 
+        // specific edge case to ensure w0 is not overwritten
         if children[0].get_kind() == &ASTNodeKind::PrimaryExp
             && children[1].get_kind() != &ASTNodeKind::PrimaryExp
         {
@@ -141,16 +145,154 @@ impl Generator {
             arithmetic_string.push_str(&rhs_string);
         }
 
-        match op {
-            '+' => arithmetic_string.push_str(&format!("add w{}, w0, w1\n", rhs)),
-            '-' => arithmetic_string.push_str(&format!("sub w{}, w0, w1\n", rhs)),
-            '*' => arithmetic_string.push_str(&format!("mul w{}, w0, w1\n", rhs)),
-            '/' => arithmetic_string.push_str(&format!("udiv w{}, w0, w1\n", rhs)),
-            _ => return Err(self.fail("arithmetic operator was invalid")),
+        // now lhs is in w0, and rhs is in w1. both lhs and rhs are consts.
+
+        match ast.get_kind() {
+            &ASTNodeKind::AddSubOp(_) | &ASTNodeKind::MultDivOp(_) => {
+                arithmetic_string.push_str(&self.generate_arithmetic(ast, register)?)
+            }
+
+            &ASTNodeKind::LOrOp | &ASTNodeKind::LAndOp => {
+                arithmetic_string.push_str(&self.generate_logical(ast, register)?)
+            }
+
+            &ASTNodeKind::BOrOp | &ASTNodeKind::BXOrOp | &ASTNodeKind::BAndOp => {
+                arithmetic_string.push_str(&self.generate_bitwise(ast, register)?)
+            }
+
+            &ASTNodeKind::EqOp(_) => {
+                arithmetic_string.push_str(&self.generate_equative(ast, register)?)
+            }
+
+            &ASTNodeKind::CmpOp(_) => {
+                arithmetic_string.push_str(&self.generate_comparative(ast, register)?)
+            }
+
+            &ASTNodeKind::ShiftOp(_) => {
+                arithmetic_string.push_str(&self.generate_shift(ast, register)?)
+            }
+
+            _ => unimplemented!(),
         }
+        arithmetic_string.push_str("\n");
 
         Ok(arithmetic_string)
     }
+
+    fn generate_arithmetic(
+        &mut self,
+        ast: &ASTNode,
+        register: &str,
+    ) -> Result<String, GeneratorError> {
+        let (&ASTNodeKind::AddSubOp(op) | &ASTNodeKind::MultDivOp(op)) = ast.get_kind() else {
+            return Err(
+                self.fail("generate_arithmetic() called with ast node which is not arithmetic")
+            );
+        };
+        match op {
+            '+' => Ok(format!("add {}, w0, w1", register)),
+            '-' => Ok(format!("sub {}, w0, w1", register)),
+            '*' => Ok(format!("mul {}, w0, w1", register)),
+            '/' => Ok(format!("udiv {}, w0, w1", register)),
+            _ => Err(self.fail(&format!("invalid arithmetic operator {}", op))),
+        }
+    }
+
+    fn generate_logical(
+        &mut self,
+        ast: &ASTNode,
+        register: &str,
+    ) -> Result<String, GeneratorError> {
+        let start_label_name = nanoid!();
+        let end_label_name = nanoid!();
+        match ast.get_kind() {
+            // w0 = lhs; w1 = rhs
+            ASTNodeKind::LAndOp => {
+                Ok([
+                    "cmp w0, #0",
+                    &format!("b.ne _{}", start_label_name), // lhs != 0?
+                    &format!("mov {}, #0", register),       // if not, lhs && rhs = 0
+                    &format!("jmp _{}", end_label_name),
+                    &format!("_{}", start_label_name), // lhs != 0
+                    "cmp w1, #0",
+                    &format!("cset {}, ne", register), // rhs != 0? if so, lhs && rhs = 1.
+                    &format!("_{}", end_label_name),   // otherwise, lhs && rhs = 0.
+                ]
+                .join("\n"))
+            }
+            ASTNodeKind::LOrOp => {
+                Ok([
+                    "cmp w0, #0",
+                    &format!("b.eq _{}", start_label_name), // lhs == 0?
+                    &format!("mov {}, #1", register),       // if not, lhs || rhs == 1
+                    &format!("jmp _{}", end_label_name),
+                    &format!("_{}", start_label_name), // lhs == 0
+                    "cmp w1, #0",
+                    &format!("cset {}, ne", register), // rhs != 0? if so, lhs || rhs == 1
+                    &format!("_{}", end_label_name),   // otherwise, lhs || rhs == 0
+                ]
+                .join("\n"))
+            }
+            _ => Err(self.fail("generate_logical() called with ast node which is not logical")),
+        }
+    }
+
+    fn generate_bitwise(
+        &mut self,
+        ast: &ASTNode,
+        register: &str,
+    ) -> Result<String, GeneratorError> {
+        match ast.get_kind() {
+            ASTNodeKind::BAndOp => Ok(format!("and {}, w0, w1", register)),
+            ASTNodeKind::BOrOp => Ok(format!("orr {}, w0, w1", register)),
+            ASTNodeKind::BXOrOp => Ok(format!("eor {}, w0, w1", register)),
+            _ => Err(self.fail("generate_bitwise() called with ast node which is not bitwise")),
+        }
+    }
+
+    fn generate_equative(
+        &mut self,
+        ast: &ASTNode,
+        register: &str,
+    ) -> Result<String, GeneratorError> {
+        let ASTNodeKind::EqOp(eq_type) = ast.get_kind() else {
+            return Err(self.fail("generate_equative called with ast node which is not equative"));
+        };
+        match eq_type {
+            EqType::Eq => Ok(["cmp w0, w1", &format!("cset {}, eq", register)].join("\n")),
+            EqType::Ne => Ok(["cmp w0, w1", &format!("cset {}, ne", register)].join("\n")),
+        }
+    }
+
+    fn generate_comparative(
+        &mut self,
+        ast: &ASTNode,
+        register: &str,
+    ) -> Result<String, GeneratorError> {
+        let ASTNodeKind::CmpOp(cmp_type) = ast.get_kind() else {
+            return Err(
+                self.fail("generate_comparative called with ast node which is not comparative")
+            );
+        };
+        match cmp_type {
+            CmpType::Ge => Ok(["cmp w0, w1", &format!("cset {}, ge", register)].join("\n")),
+            CmpType::Le => Ok(["cmp w0, w1", &format!("cset {}, le", register)].join("\n")),
+            CmpType::Gt => Ok(["cmp w0, w1", &format!("cset {}, gt", register)].join("\n")),
+            CmpType::Lt => Ok(["cmp w0, w1", &format!("cset {}, lt", register)].join("\n")),
+        }
+    }
+
+    fn generate_shift(&mut self, ast: &ASTNode, register: &str) -> Result<String, GeneratorError> {
+        let ASTNodeKind::ShiftOp(shift_type) = ast.get_kind() else {
+            return Err(
+                self.fail("generate_shift called with ast node which is not a shift operation"));
+        };            
+        match shift_type {
+            ShiftType::Right => Ok(format!("lsr {}, w0, w1", register)),
+            ShiftType::Left => Ok(format!("lsl {}, w0, w1", register)),
+        }
+    }
+
 
     fn generate_primary_with_register(
         &mut self,
@@ -184,10 +326,6 @@ impl Generator {
         Ok(expression_str)
     }
 
-    fn generate_primary(&mut self, ast: &ASTNode) -> Result<String, GeneratorError> {
-        self.generate_primary_with_register(ast, "w0")
-    }
-
     fn generate_unary(
         &mut self,
         op: &char,
@@ -212,7 +350,7 @@ impl Generator {
                 unary_str.push_str(&inner_exp_asm);
             }
             _ => {
-                let exp_asm = self.generate_arithmetic(&child, 0)?;
+                let exp_asm = self.generate_binary_op(&child, register)?;
                 unary_str.push_str(&exp_asm);
             }
         }

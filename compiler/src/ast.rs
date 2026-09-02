@@ -1,19 +1,64 @@
 use std::borrow::BorrowMut;
 
-#[derive(Default, Debug, Clone, PartialEq)]
-pub enum ASTNodeKind {
-    #[default]
-    Program,
-    FunctionDeclaration(String, String), // data_type, identifier
-    Statement(String),
-    PrimaryExp,
-    Constant(String),
-    UnOp(char),      // operator,
-    MultDivOp(char), // * or /
-    AddSubOp(char),  // + or -
+#[derive(Debug, Clone, PartialEq)]
+pub enum ShiftType {
+    Left,
+    Right,
 }
 
-#[derive(Default, Clone)]
+#[derive(Debug, Clone, PartialEq)]
+pub enum CmpType {
+    Gt,
+    Lt,
+    Ge,
+    Le,
+}
+
+#[derive(Debug, Clone, PartialEq)]
+pub enum EqType {
+    Eq,
+    Ne
+}
+
+#[derive(Debug, Clone, PartialEq)]
+pub enum AssignType {
+    Simple,
+    Sum,
+    Diff,
+    Prod,
+    Quot,
+    LShift,
+    RShift,
+    BAnd,
+    BXOr,
+    BOr
+}
+
+#[derive(Debug, Clone, PartialEq)]
+pub enum ASTNodeKind {
+    Program,
+    FunctionDeclaration(String, String), // datatype, identifier
+    Statement,
+    Return,
+    Declaration(String), // datatype, identifier
+    Assignment(AssignType), // identifier
+    PrimaryExp,
+    Constant(String),
+    UnOp(char),      // unary operator
+    MultDivOp(char), // * or /
+    AddSubOp(char),  // + or -
+    ShiftOp(ShiftType),
+    CmpOp(CmpType),
+    EqOp(EqType),
+    BAndOp,
+    BXOrOp,
+    BOrOp,
+    LAndOp,
+    LOrOp,
+    Variable(String) ,
+}
+
+#[derive(Clone)]
 pub struct ASTNode {
     kind: ASTNodeKind,
     children: Option<Vec<Box<ASTNode>>>,

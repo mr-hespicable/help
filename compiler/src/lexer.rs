@@ -28,6 +28,7 @@ impl Tokenizer {
         let mut results = vec![];
 
         let token_matching_str = REGEX_TABLE.join("|");
+        dbg![&token_matching_str];
 
         let rgx = Regex::new(&token_matching_str).unwrap();
 

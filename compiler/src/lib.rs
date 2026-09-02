@@ -21,16 +21,16 @@ pub fn to_file(filename: &str) -> Result<(), Box<dyn std::error::Error>> {
 
     let tk = Tokenizer::new(File::open(filename).unwrap());
     let ag = tk.tokenize()?;
-    // dbg![&ag];
+    dbg![&ag];
 
     let mut prs = Parser::new(ag);
     let parsed = prs.parse()?;
     dbg![&parsed];
 
-    let mut gn = Generator::new(parsed);
-    let generated: String = gn.generate()?;
+    // let mut gn = Generator::new(parsed);
+    // let generated: String = gn.generate()?;
 
-    println!("{}", generated);
+    // println!("{}", generated);
     // let _ = asm_file.write_all(&generated.as_bytes());
 
     let _ = Command::new("gcc")
