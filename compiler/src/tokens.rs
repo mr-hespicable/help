@@ -16,6 +16,7 @@ pub enum Token {
     Minus,  // minus sign
     Times,  // 6 * 9
     Divide, // 20 / 4
+    Remainder, 
     LeftShift,
     RightShift,
     Lt,
@@ -32,9 +33,19 @@ pub enum Token {
     BitwiseComplement, // 4 = 100. ~4 = 011 = 3
     LogicalNegation,   // !1 = 0; !24 = 0, !0 = 1
     SimpleAssign,
+    SumAssign,
+    DiffAssign,
+    ProdAssign,
+    QuotAssign,
+    RemAssign,
+    LShAssign,
+    RShAssign,
+    AndAssign,
+    XOrAssign,
+    OrAssign,
 }
 
-pub const REGEX_TABLE: [&str; 29] = [
+pub const REGEX_TABLE: [&str; 40] = [
     r"int",
     r"return",
     r"\{",
@@ -44,6 +55,17 @@ pub const REGEX_TABLE: [&str; 29] = [
     r";",
     r"[a-zA-Z]\w*",
     r"[0-9]+",
+    r"\+=",
+    r"\-=",
+    r"\*=",
+    r"\/=",
+    r"\%=",
+    r"\<<=",
+    r"\>>=",
+    r"\&=",
+    r"\^=",
+    r"\|=",
+    r"%",
     r"\+",
     r"-",
     r"\*",
@@ -83,6 +105,7 @@ pub fn get_token_from_string(s: &str) -> Result<Token, TokenizerError> {
                 r"-" => Ok(Token::Minus),
                 r"\*" => Ok(Token::Times),
                 r"/" => Ok(Token::Divide),
+                r"%" => Ok(Token::Remainder),
                 r"<<" => Ok(Token::LeftShift),
                 r">>" => Ok(Token::RightShift),
                 r"<=" => Ok(Token::Le),
@@ -99,6 +122,16 @@ pub fn get_token_from_string(s: &str) -> Result<Token, TokenizerError> {
                 r"~" => Ok(Token::BitwiseComplement),
                 r"!" => Ok(Token::LogicalNegation),
                 r"=" => Ok(Token::SimpleAssign),
+                r"\+=" => Ok(Token::SumAssign),
+                r"\-=" => Ok(Token::DiffAssign),
+                r"\*=" => Ok(Token::ProdAssign),
+                r"\/=" => Ok(Token::QuotAssign),
+                r"\%=" => Ok(Token::RemAssign),
+                r"\<<=" => Ok(Token::LShAssign),
+                r"\>>=" => Ok(Token::RShAssign),
+                r"\&=" => Ok(Token::AndAssign),
+                r"\^=" => Ok(Token::XOrAssign),
+                r"\|=" => Ok(Token::OrAssign),
                 _ => Err(fail("regex does not match any in REGEX_TABLE")),
             };
         }

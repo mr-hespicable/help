@@ -27,6 +27,7 @@ pub enum AssignType {
     Diff,
     Prod,
     Quot,
+    Rem,
     LShift,
     RShift,
     BAnd,

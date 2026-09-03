@@ -96,6 +96,57 @@ impl Parser {
                 }
             }
 
+            Some(Token::Identifier(id)) => {
+                println!("id");
+
+                let next_token = self.tokens.pop_front();
+                let mut og_node: ASTNode;
+
+                match next_token {
+                    Some(Token::SimpleAssign) => {
+                        og_node = ASTNode::new(ASTNodeKind::Assignment(AssignType::Simple), None);
+                    },
+                    Some(Token::SumAssign) => {
+                        og_node = ASTNode::new(ASTNodeKind::Assignment(AssignType::Sum), None);
+                    },
+                    Some(Token::DiffAssign) => {
+                        og_node = ASTNode::new(ASTNodeKind::Assignment(AssignType::Diff), None);
+                    },
+                    Some(Token::ProdAssign) => {
+                        og_node = ASTNode::new(ASTNodeKind::Assignment(AssignType::Prod), None);
+                    },
+                    Some(Token::QuotAssign) => {
+                        og_node = ASTNode::new(ASTNodeKind::Assignment(AssignType::Diff), None);
+                    },
+                    Some(Token::RemAssign) => {
+                        og_node = ASTNode::new(ASTNodeKind::Assignment(AssignType::Rem), None);
+                    },
+                    Some(Token::LShAssign) => {
+                        og_node = ASTNode::new(ASTNodeKind::Assignment(AssignType::LShift), None);
+                    },
+                    Some(Token::RShAssign) => {
+                        og_node = ASTNode::new(ASTNodeKind::Assignment(AssignType::RShift), None);
+                    },
+                    Some(Token::AndAssign) => {
+                        og_node = ASTNode::new(ASTNodeKind::Assignment(AssignType::BAnd), None);
+                    },
+                    Some(Token::XOrAssign) => {
+                        og_node = ASTNode::new(ASTNodeKind::Assignment(AssignType::BXOr), None);
+                    },
+                    Some(Token::OrAssign) => {
+                        og_node = ASTNode::new(ASTNodeKind::Assignment(AssignType::BOr), None);
+                    },
+                    _ => return Err(self.fail(&format!("next_token not = when assigning variable, {:?}", next_token))),
+                }
+                let id_node = ASTNode::new(ASTNodeKind::Variable(id), None);
+                og_node.push_child(id_node);
+
+                let inner = self.parse_assignment()?;
+                og_node.push_child(inner);
+                ast_node = og_node;
+                self.expect_token(Token::Semicolon)?;
+            }
+
             // declaration
             Some(Token::DataType(data_type)) => {
                 ast_node = ASTNode::new(ASTNodeKind::Declaration(data_type), None);
@@ -107,6 +158,7 @@ impl Parser {
                 let next_token = self.tokens.pop_front();
 
                 match next_token {
+                    // can only be simple assign
                     Some(Token::SimpleAssign) => {
                         // int a = <TOKENS>
                         let mut og_node =
@@ -154,12 +206,76 @@ impl Parser {
 
         match current_token {
             Some(Token::Identifier(ref id)) => {
-                let next = self
-                    .tokens
-                    .pop_front_if(|x| matches!(x, Token::SimpleAssign));
+                let is_assign = |x: &mut Token| {
+                    matches!(
+                        x,
+                        Token::SimpleAssign
+                            | Token::SumAssign
+                            | Token::DiffAssign
+                            | Token::ProdAssign
+                            | Token::QuotAssign
+                            | Token::RemAssign
+                            | Token::LShAssign
+                            | Token::RShAssign
+                            | Token::AndAssign
+                            | Token::XOrAssign
+                            | Token::OrAssign
+                    )
+                };
+                let next = self.tokens.pop_front_if(is_assign);
                 match next {
-                    Some(_) => {
+                    Some(Token::SimpleAssign) => {
                         ast_node = ASTNode::new(ASTNodeKind::Assignment(AssignType::Simple), None);
+                        ast_node.push_child(self.parse_variable(id.to_string())?);
+                        ast_node.push_child(self.parse_assignment()?);
+                    }
+                    Some(Token::SumAssign) => {
+                        ast_node = ASTNode::new(ASTNodeKind::Assignment(AssignType::Sum), None);
+                        ast_node.push_child(self.parse_variable(id.to_string())?);
+                        ast_node.push_child(self.parse_assignment()?);
+                    }
+                    Some(Token::DiffAssign) => {
+                        ast_node = ASTNode::new(ASTNodeKind::Assignment(AssignType::Diff), None);
+                        ast_node.push_child(self.parse_variable(id.to_string())?);
+                        ast_node.push_child(self.parse_assignment()?);
+                    }
+                    Some(Token::ProdAssign) => {
+                        ast_node = ASTNode::new(ASTNodeKind::Assignment(AssignType::Prod), None);
+                        ast_node.push_child(self.parse_variable(id.to_string())?);
+                        ast_node.push_child(self.parse_assignment()?);
+                    }
+                    Some(Token::QuotAssign) => {
+                        ast_node = ASTNode::new(ASTNodeKind::Assignment(AssignType::Quot), None);
+                        ast_node.push_child(self.parse_variable(id.to_string())?);
+                        ast_node.push_child(self.parse_assignment()?);
+                    }
+                    Some(Token::RemAssign) => {
+                        ast_node = ASTNode::new(ASTNodeKind::Assignment(AssignType::Rem), None);
+                        ast_node.push_child(self.parse_variable(id.to_string())?);
+                        ast_node.push_child(self.parse_assignment()?);
+                    }
+                    Some(Token::LShAssign) => {
+                        ast_node = ASTNode::new(ASTNodeKind::Assignment(AssignType::LShift), None);
+                        ast_node.push_child(self.parse_variable(id.to_string())?);
+                        ast_node.push_child(self.parse_assignment()?);
+                    }
+                    Some(Token::RShAssign) => {
+                        ast_node = ASTNode::new(ASTNodeKind::Assignment(AssignType::RShift), None);
+                        ast_node.push_child(self.parse_variable(id.to_string())?);
+                        ast_node.push_child(self.parse_assignment()?);
+                    }
+                    Some(Token::AndAssign) => {
+                        ast_node = ASTNode::new(ASTNodeKind::Assignment(AssignType::BAnd), None);
+                        ast_node.push_child(self.parse_variable(id.to_string())?);
+                        ast_node.push_child(self.parse_assignment()?);
+                    }
+                    Some(Token::XOrAssign) => {
+                        ast_node = ASTNode::new(ASTNodeKind::Assignment(AssignType::BXOr), None);
+                        ast_node.push_child(self.parse_variable(id.to_string())?);
+                        ast_node.push_child(self.parse_assignment()?);
+                    }
+                    Some(Token::OrAssign) => {
+                        ast_node = ASTNode::new(ASTNodeKind::Assignment(AssignType::BOr), None);
                         ast_node.push_child(self.parse_variable(id.to_string())?);
                         ast_node.push_child(self.parse_assignment()?);
                     }
